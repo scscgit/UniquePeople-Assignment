@@ -13,6 +13,7 @@ public class TracingFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         log.info("Context path: " + request.getServletContext().getContextPath());
+        chain.doFilter(request, response);
     }
 
 }
