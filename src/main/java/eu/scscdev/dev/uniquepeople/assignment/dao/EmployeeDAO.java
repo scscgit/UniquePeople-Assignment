@@ -54,14 +54,7 @@ public class EmployeeDAO {
 
     @Transactional
     public Employee update(Employee e) {
-        // TODO: all fields automatically
-        em.createQuery("update Employee e set e.firstName = :firstName, e.lastName = :lastName, e.address = :address, e.company = :company")
-            .setParameter("firstName", e.getFirstName())
-            .setParameter("lastName", e.getLastName())
-            .setParameter("address", e.getAddress())
-            .setParameter("company", e.getCompany())
-            .executeUpdate();
-        // TODO: re-implement using other option
-        return findOne(e.getId()).get();
+        // The specification wasn't clear: should update also persist a new instance (if the id is null)?
+        return em.merge(e);
     }
 }
