@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,11 +15,13 @@ public class EmployeeDAO {
     @Inject
     private EntityManager em;
 
+    @Transactional
     public List<Employee> findAll() {
         return em.createQuery("select e from Employee e", Employee.class)
             .getResultList();
     }
 
+    @Transactional
     public Optional<Employee> findOne(Long id) {
         return em.createQuery("select e from Employee e where e.id = :id", Employee.class)
             .setParameter("id", id)
@@ -27,6 +30,7 @@ public class EmployeeDAO {
     }
 
     // TODO: Verify the specification, what's the "name" supposed to mean? I'll assume it's a space-separated format
+    @Transactional
     public Optional<Employee> findByName(String name) {
         String[] split = name.split(" ");
         if (split.length != 2) {
@@ -41,12 +45,14 @@ public class EmployeeDAO {
             .findFirst();
     }
 
+    @Transactional
     public Long delete(Long id) {
         return (long) em.createQuery("delete from Employee e where e.id = :id")
             .setParameter("id", id)
             .executeUpdate();
     }
 
+    @Transactional
     public Employee update(Employee e) {
         // TODO: all fields automatically
         em.createQuery("update Employee e set e.firstName = :firstName, e.lastName = :lastName, e.address = :address, e.company = :company")

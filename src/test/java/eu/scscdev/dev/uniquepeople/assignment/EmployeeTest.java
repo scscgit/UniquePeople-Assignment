@@ -20,7 +20,8 @@ public class EmployeeTest {
 
     @Test
     public void testEmployeeDao() {
-        List<Employee> employees = createEmployee();
+        createEmployee();
+        List<Employee> employees = employeeDAO.findAll();
         Assert.assertEquals(1, employees.size());
         Employee employee = employeeRepository.findAll().get(0);
         Assert.assertEquals(1L, employee.getId().longValue());
@@ -50,7 +51,7 @@ public class EmployeeTest {
         );
     }
 
-    private List<Employee> createEmployee() {
+    private void createEmployee() {
         employeeRepository.saveAndFlush(Employee.builder()
             .firstName("FirstName")
             .lastName("LastName")
@@ -58,7 +59,6 @@ public class EmployeeTest {
             .company(null)
             .build()
         );
-        return employeeRepository.findAll();
     }
 
 }
