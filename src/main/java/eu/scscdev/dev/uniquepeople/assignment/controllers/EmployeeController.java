@@ -31,21 +31,19 @@ public class EmployeeController {
             log.info("Employee not found");
             return ResponseEntity.notFound().build();
         }
-        log.info("Employee found");
+        log.info("Employee found: " + employee.toString());
         return ResponseEntity.of(employee);
     }
 
     @Secured("ADMIN")
     @PutMapping("employees")
     public ResponseEntity generateEmployee(HttpServletRequest request) {
-        employeeRepository.saveAndFlush(
-            Employee.builder()
-                .firstName(request.getParameter("firstName"))
-                .lastName(request.getParameter("lastName"))
-                .address(request.getParameter("address"))
-                .build()
-        );
-        log.info("Employee created");
+        Employee employee = employeeRepository.saveAndFlush(Employee.builder()
+            .firstName(request.getParameter("firstName"))
+            .lastName(request.getParameter("lastName"))
+            .address(request.getParameter("address"))
+            .build());
+        log.info("Employee created: " + employee.toString());
         return ResponseEntity.ok().build();
     }
 }

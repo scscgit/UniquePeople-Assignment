@@ -4,6 +4,7 @@ import lombok.*;
 import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -22,12 +23,15 @@ public class Employee implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @Length(min = 1)
     private String firstName;
 
+    @NotNull
     @Length(min = 1)
     private String lastName;
 
+    @NotNull
     @Length(min = 1)
     private String address;
 
