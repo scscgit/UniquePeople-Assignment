@@ -19,7 +19,7 @@ public class EmployeeTest {
     private EmployeeDAO employeeDAO;
 
     @Test
-    public void testEmployeeDao() {
+    public void testEmployeeDaoOne() {
         createEmployee();
         List<Employee> employees = employeeDAO.findAll();
         Assert.assertEquals(1, employees.size());
@@ -41,14 +41,29 @@ public class EmployeeTest {
         Assert.assertFalse(
             employeeDAO.findByName("FirstName LastName").isPresent()
         );
+    }
 
-        employeeRepository.saveAndFlush(Employee.builder()
-            .firstName("FirstName")
-            .lastName("LastName")
-            .address("Somewhere")
-            .company(null)
-            .build()
-        );
+    @Test
+    public void testEmployeeDaoTwo() {
+        createEmployee();
+        createEmployee();
+        List<Employee> employees = employeeDAO.findAll();
+        Assert.assertEquals(2, employees.size());
+        Employee employee = employees.get(0);
+        employee.setFirstName("John");
+        employee.setLastName("Cena");
+        employee.setAddress("Slovakia");
+        employeeDAO.update(employee);
+
+        employee = employeeDAO.findOne(employee.getId()).get();
+        Assert.assertEquals("John", employee.getFirstName());
+        Assert.assertEquals("Cena", employee.getLastName());
+        Assert.assertEquals("Slovakia", employee.getAddress());
+
+        employeeDAO.delete(employee.getId());
+        employees = employeeDAO.findAll();
+        Assert.assertEquals(1, employees.size());
+        Assert.assertNotEquals(employees.get(0).getId(), employee.getId());
     }
 
     private void createEmployee() {
