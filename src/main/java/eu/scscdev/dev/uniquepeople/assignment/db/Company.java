@@ -1,10 +1,10 @@
 package eu.scscdev.dev.uniquepeople.assignment.db;
 
 import lombok.*;
-import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -14,7 +14,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-public class Employee implements Serializable {
+public class Company implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -22,24 +22,15 @@ public class Employee implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Length(min = 1)
-    private String firstName;
-
-    @Length(min = 1)
-    private String lastName;
-
-    @Length(min = 1)
-    private String address;
-
-    @ManyToOne
-    private Company company;
+    @OneToMany(mappedBy = "company", fetch = FetchType.EAGER)
+    private List<Employee> employees;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Employee)) return false;
-        Employee employee = (Employee) o;
-        return Objects.equals(id, employee.id);
+        if (!(o instanceof Company)) return false;
+        Company company = (Company) o;
+        return Objects.equals(id, company.id);
     }
 
     @Override
