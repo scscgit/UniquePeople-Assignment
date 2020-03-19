@@ -19,10 +19,14 @@ import java.util.Optional;
 @Controller
 public class EmployeeController {
 
-    @Inject
     private EmployeeDAO employeeDAO;
-    @Inject
     private EmployeeRepository employeeRepository;
+
+    @Inject
+    public EmployeeController(EmployeeRepository employeeRepository, EmployeeDAO employeeDAO) {
+        this.employeeRepository = employeeRepository;
+        this.employeeDAO = employeeDAO;
+    }
 
     @GetMapping("employees/{id}")
     public ResponseEntity<Employee> getEmployeeById(@PathVariable long id) {

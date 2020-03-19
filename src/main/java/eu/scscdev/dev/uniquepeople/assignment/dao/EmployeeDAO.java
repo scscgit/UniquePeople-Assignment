@@ -12,8 +12,12 @@ import java.util.Optional;
 @Repository
 public class EmployeeDAO {
 
-    @Inject
     private EntityManager em;
+
+    @Inject
+    public EmployeeDAO(EntityManager entityManager) {
+        this.em = entityManager;
+    }
 
     @Transactional
     public List<Employee> findAll() {
@@ -47,6 +51,7 @@ public class EmployeeDAO {
 
     @Transactional
     public Long delete(Long id) {
+        // The semantics of return value wasn't defined, assuming it's the update result
         return (long) em.createQuery("delete from Employee e where e.id = :id")
             .setParameter("id", id)
             .executeUpdate();
