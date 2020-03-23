@@ -31,12 +31,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        super.configure(auth);
         if (isDev()) {
             auth.inMemoryAuthentication()
                 .withUser("admin")
-                .password("most-secret")
+                .password("{noop}most-secret")
                 .roles("ADMIN");
+        } else {
+            super.configure(auth);
         }
     }
 

@@ -39,7 +39,7 @@ public class EmployeeController {
         return ResponseEntity.of(employee);
     }
 
-    @Secured("ADMIN")
+    @Secured("ROLE_ADMIN")
     @PutMapping("employees")
     public ResponseEntity generateEmployee(HttpServletRequest request) {
         Employee employee = employeeRepository.saveAndFlush(Employee.builder()
