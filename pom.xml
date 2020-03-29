@@ -69,6 +69,13 @@
 			<artifactId>spring-session-jdbc</artifactId>
 		</dependency>
 
+		<!-- Only required to support annotating @Transactional on Type rather than Method (e.g. for Services) -->
+		<dependency>
+			<groupId>javax.interceptor</groupId>
+			<artifactId>javax.interceptor-api</artifactId>
+			<version>1.2</version>
+		</dependency>
+
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>

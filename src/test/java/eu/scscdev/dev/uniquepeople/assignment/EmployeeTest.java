@@ -5,15 +5,21 @@ import eu.scscdev.dev.uniquepeople.assignment.db.Company;
 import eu.scscdev.dev.uniquepeople.assignment.db.Employee;
 import eu.scscdev.dev.uniquepeople.assignment.repository.CompanyRepository;
 import eu.scscdev.dev.uniquepeople.assignment.repository.EmployeeRepository;
+import lombok.var;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ActiveProfiles;
 
 import javax.inject.Inject;
-import java.util.List;
+import javax.transaction.Transactional;
 import java.util.function.Consumer;
 
 @SpringBootTest
+@ActiveProfiles("dev")
+@Transactional
+@Rollback
 public class EmployeeTest {
 
     @Inject
@@ -28,11 +34,11 @@ public class EmployeeTest {
      */
     @Test
     public void testEmployeeDaoOne() {
-        createEmployee(employee -> employeeRepository.saveAndFlush(employee));
-        List<Employee> employees = employeeDAO.findAll();
+        createEmployee(employee -> employeeRepository.saveAndFlush(employee), createCompany());
+        var employees = employeeDAO.findAll();
         Assert.assertEquals(1, employees.size());
-        Employee employee = employeeRepository.findAll().get(0);
-        Assert.assertEquals(1L, employee.getId().longValue());
+        var employee = employeeRepository.findAll().get(0);
+        Assert.assertEquals(employees.get(0).getId(), employee.getId());
 
         employeeDAO.findOne(employee.getId());
         Assert.assertTrue(
@@ -40,6 +46,9 @@ public class EmployeeTest {
         );
         Assert.assertTrue(
             employeeDAO.findByName("FirstName LastName").isPresent()
+        );
+        Assert.assertTrue(
+            employeeRepository.findByName("FirstName LastName").isPresent()
         );
 
         employeeDAO.delete(employee.getId());
@@ -49,6 +58,9 @@ public class EmployeeTest {
         Assert.assertFalse(
             employeeDAO.findByName("FirstName LastName").isPresent()
         );
+        Assert.assertFalse(
+            employeeRepository.findByName("FirstName LastName").isPresent()
+        );
     }
 
     /**
@@ -57,14 +69,14 @@ public class EmployeeTest {
     @Test
     public void testEmployeeDaoTwo() {
         // Create two employees
-        createEmployee(employee -> employeeRepository.saveAndFlush(employee));
+        createEmployee(employee -> employeeRepository.saveAndFlush(employee), createCompany());
         // Also test the EmployeeDAO's update to work as save
-        createEmployee(employee -> employeeDAO.update(employee));
-        List<Employee> employees = employeeDAO.findAll();
+        createEmployee(employee -> employeeDAO.update(employee), createCompany());
+        var employees = employeeDAO.findAll();
         Assert.assertEquals(2, employees.size());
 
         // Verify the first employee before a modification
-        Employee employee = employees.get(0);
+        var employee = employees.get(0);
         Assert.assertEquals("FirstName", employee.getFirstName());
         Assert.assertEquals("LastName", employee.getLastName());
         Assert.assertEquals("Somewhere", employee.getAddress());
@@ -92,21 +104,52 @@ public class EmployeeTest {
         Assert.assertNull(updatedEmployee.getCompany());
 
         // Delete the employee
-        employeeDAO.delete(employee.getId());
+        long deleted = employeeDAO.delete(employee.getId());
+        Assert.assertEquals(1L, deleted);
         employees = employeeDAO.findAll();
         Assert.assertEquals(1, employees.size());
+        // Try to delete it again, which should safely fail
+        deleted = employeeDAO.delete(employee.getId());
+        Assert.assertEquals(0L, deleted);
 
         // Make sure the remaining employee doesn't share the same ID with the deleted one
         Assert.assertNotEquals(employees.get(0).getId(), employee.getId());
+
+        // Delete the other employee using EmployeeRepository
+        employee = employees.get(0);
+        deleted = employeeRepository.removeById(employee.getId());
+        Assert.assertEquals(1L, deleted);
+        employees = employeeRepository.findAll();
+        Assert.assertEquals(0, employees.size());
+        // Try to delete it again, which should safely fail
+        deleted = employeeRepository.removeById(employee.getId());
+        Assert.assertEquals(0L, deleted);
     }
 
-    private void createEmployee(Consumer<Employee> function) {
+    @Test
+    public void duplicateFirstEmployeeUsingWith() {
+        // Prepare one employee
+        createEmployee(employee -> employeeRepository.saveAndFlush(employee), createCompany());
+        Assert.assertEquals(1, employeeDAO.findAll().size());
+
+        // Replicate it twice using Lombok's extension method of With, expecting the instance to stay immutable
+        var oneWithoutId = employeeDAO.findAll().get(0).withId(null);
+        employeeDAO.update(oneWithoutId);
+        employeeDAO.update(oneWithoutId);
+        Assert.assertEquals(3, employeeDAO.findAll().size());
+    }
+
+    private void createEmployee(Consumer<Employee> function, Company company) {
         function.accept(Employee.builder()
             .firstName("FirstName")
             .lastName("LastName")
             .address("Somewhere")
-            .company(companyRepository.saveAndFlush(Company.builder().build()))
+            .company(company)
             .build()
         );
+    }
+
+    private Company createCompany() {
+        return companyRepository.saveAndFlush(Company.builder().build());
     }
 }

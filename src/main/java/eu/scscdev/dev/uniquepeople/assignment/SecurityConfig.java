@@ -7,19 +7,21 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.stereotype.Component;
+import org.springframework.web.cors.CorsConfiguration;
 
 @Component
 @EnableGlobalMethodSecurity(securedEnabled = true)
 @Log
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Value("${spring.profiles.active}")
+    @Value("${spring.profiles.active:}")
     private String profile;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         if (isDev()) {
             http.csrf().disable();
+            http.cors().configurationSource(req -> new CorsConfiguration().applyPermitDefaultValues());
             log.warning("CSRF disabled due to DEV mode!");
         }
         http

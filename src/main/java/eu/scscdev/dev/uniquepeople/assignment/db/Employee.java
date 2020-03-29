@@ -6,15 +6,17 @@ import org.hibernate.validator.constraints.Length;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Objects;
 
 @Entity
-@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
-@ToString
+@EqualsAndHashCode(of = "id")
+@Builder(toBuilder = true)
+@With
+@NamedQueries(
+    @NamedQuery(name = "Employee.findByName", query = "select e from Employee e where e.firstName = :firstName and e.lastName = :lastName")
+)
 public class Employee implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -37,17 +39,4 @@ public class Employee implements Serializable {
 
     @ManyToOne
     private Company company;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Employee)) return false;
-        Employee employee = (Employee) o;
-        return Objects.equals(id, employee.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }

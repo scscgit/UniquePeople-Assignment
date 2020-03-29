@@ -5,15 +5,14 @@ import lombok.*;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Objects;
 
 @Entity
-@Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
-@ToString
+@EqualsAndHashCode(of = "id")
+@Builder(toBuilder = true)
+@With
 public class Company implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -24,17 +23,4 @@ public class Company implements Serializable {
 
     @OneToMany(mappedBy = "company", fetch = FetchType.EAGER)
     private List<Employee> employees;
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Company)) return false;
-        Company company = (Company) o;
-        return Objects.equals(id, company.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }
