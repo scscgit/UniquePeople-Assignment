@@ -7,19 +7,24 @@ import eu.scscdev.dev.uniquepeople.assignment.repository.CompanyRepository;
 import eu.scscdev.dev.uniquepeople.assignment.repository.EmployeeRepository;
 import lombok.var;
 import org.junit.Assert;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 @SpringBootTest
 @ActiveProfiles("dev")
 @Transactional
-@Rollback
+// Disabling Rollback due to TransactionTemplate's nested transactions, which are not possible to be rolled back
+@Rollback(false)
 public class EmployeeTest {
 
     @Inject
@@ -28,17 +33,23 @@ public class EmployeeTest {
     private CompanyRepository companyRepository;
     @Inject
     private EmployeeDAO employeeDAO;
+    @Inject
+    private TransactionTemplate transactionTemplate;
 
     /**
      * Use @employeeRepository and @companyRepository to test the first half of methods of @employeeDAO.
      */
     @Test
+    @Order(1)
     public void testEmployeeDaoOne() {
-        createEmployee(employee -> employeeRepository.saveAndFlush(employee), createCompany());
+        createEmployeeInNewTransaction(employeeRepository::save, this::createCompany);
         var employees = employeeDAO.findAll();
         Assert.assertEquals(1, employees.size());
         var employee = employeeRepository.findAll().get(0);
         Assert.assertEquals(employees.get(0).getId(), employee.getId());
+
+        // Assert bi-directional association (needs to be explicitly set if not done via createEmployeeInNewTransaction)
+        Assert.assertEquals(employee.getId(), employee.getCompany().getEmployees().get(0).getId());
 
         employeeDAO.findOne(employee.getId());
         Assert.assertTrue(
@@ -67,11 +78,12 @@ public class EmployeeTest {
      * Use @employeeRepository and @companyRepository to test the second half of methods of @employeeDAO.
      */
     @Test
+    @Order(2)
     public void testEmployeeDaoTwo() {
         // Create two employees
-        createEmployee(employee -> employeeRepository.saveAndFlush(employee), createCompany());
+        createEmployeeInNewTransaction(employee -> employeeRepository.save(employee), this::createCompany);
         // Also test the EmployeeDAO's update to work as save
-        createEmployee(employee -> employeeDAO.update(employee), createCompany());
+        createEmployeeInNewTransaction(employee -> employeeDAO.update(employee), this::createCompany);
         var employees = employeeDAO.findAll();
         Assert.assertEquals(2, employees.size());
 
@@ -127,9 +139,10 @@ public class EmployeeTest {
     }
 
     @Test
+    @Order(3)
     public void duplicateFirstEmployeeUsingWith() {
         // Prepare one employee
-        createEmployee(employee -> employeeRepository.saveAndFlush(employee), createCompany());
+        createEmployeeInNewTransaction(employee -> employeeRepository.save(employee), this::createCompany);
         Assert.assertEquals(1, employeeDAO.findAll().size());
 
         // Replicate it twice using Lombok's extension method of With, expecting the instance to stay immutable
@@ -139,17 +152,24 @@ public class EmployeeTest {
         Assert.assertEquals(3, employeeDAO.findAll().size());
     }
 
-    private void createEmployee(Consumer<Employee> function, Company company) {
-        function.accept(Employee.builder()
-            .firstName("FirstName")
-            .lastName("LastName")
-            .address("Somewhere")
-            .company(company)
-            .build()
+    /**
+     * Creates and persists a new Employee with a Company, implicitly making the associations bi-directional.
+     */
+    public void createEmployeeInNewTransaction(Consumer<Employee> saveFunction, Supplier<Company> createCompany) {
+        // We would require a self-autowired call in order to support @Transactional without TransactionTemplate
+        transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        transactionTemplate.executeWithoutResult(
+            status -> saveFunction.accept(Employee.builder()
+                .firstName("FirstName")
+                .lastName("LastName")
+                .address("Somewhere")
+                .company(createCompany.get())
+                .build()
+            )
         );
     }
 
     private Company createCompany() {
-        return companyRepository.saveAndFlush(Company.builder().build());
+        return companyRepository.save(Company.builder().build());
     }
 }

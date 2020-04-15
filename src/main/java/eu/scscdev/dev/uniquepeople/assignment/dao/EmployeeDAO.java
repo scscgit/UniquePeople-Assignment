@@ -51,7 +51,7 @@ public class EmployeeDAO {
      * Delete one Employee.
      *
      * @param id ID of the Employee
-     * @return Number of affected rows on the interval of 0 to 1
+     * @return Number of affected rows on the interval of 0 to 1 inclusively
      */
     public Long delete(Long id) {
         // The semantics of return value wasn't defined, assuming it's the update result

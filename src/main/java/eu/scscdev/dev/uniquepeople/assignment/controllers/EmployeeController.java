@@ -10,9 +10,11 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.concurrent.ForkJoinPool;
 
 @Log
 @Controller
@@ -22,25 +24,33 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @GetMapping("employees/{id}")
-    public ResponseEntity<Employee> getEmployeeById(@PathVariable long id) {
-        var employee = employeeService.findOne(id);
-        if (!employee.isPresent()) {
-            log.info("Employee not found");
-            return ResponseEntity.notFound().build();
-        }
-        log.info("Employee found: " + employee.toString());
-        return ResponseEntity.of(employee);
+    public DeferredResult<ResponseEntity<Employee>> getEmployeeById(@PathVariable long id) {
+        var result = new DeferredResult<ResponseEntity<Employee>>();
+        ForkJoinPool.commonPool().submit(() -> {
+            var employee = employeeService.findOne(id);
+            if (!employee.isPresent()) {
+                log.info("Employee not found");
+                result.setResult(ResponseEntity.notFound().build());
+            }
+            log.info("Employee found: " + employee.toString());
+            result.setResult(ResponseEntity.of(employee));
+        });
+        return result;
     }
 
     @Secured("ROLE_ADMIN")
-    @PutMapping("employees")
-    public ResponseEntity generateEmployee(HttpServletRequest request) {
-        var employee = employeeService.update(Employee.builder()
-            .firstName(request.getParameter("firstName"))
-            .lastName(request.getParameter("lastName"))
-            .address(request.getParameter("address"))
-            .build());
-        log.info("Employee created: " + employee.toString());
-        return ResponseEntity.ok().build();
+    @PostMapping("employees")
+    public DeferredResult<ResponseEntity<?>> generateEmployee(HttpServletRequest request) {
+        var result = new DeferredResult<ResponseEntity<?>>();
+        ForkJoinPool.commonPool().submit(() -> {
+            var employee = employeeService.update(Employee.builder()
+                .firstName(request.getParameter("firstName"))
+                .lastName(request.getParameter("lastName"))
+                .address(request.getParameter("address"))
+                .build());
+            log.info("Employee created: " + employee.toString());
+            result.setResult(ResponseEntity.ok().build());
+        });
+        return result;
     }
 }

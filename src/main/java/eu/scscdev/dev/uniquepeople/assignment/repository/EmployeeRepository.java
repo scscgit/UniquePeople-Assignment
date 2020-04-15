@@ -2,12 +2,12 @@ package eu.scscdev.dev.uniquepeople.assignment.repository;
 
 import eu.scscdev.dev.uniquepeople.assignment.db.Employee;
 import lombok.var;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+public interface EmployeeRepository extends CrudRepository<Employee, Long> {
 
     List<Employee> findAll();
 
